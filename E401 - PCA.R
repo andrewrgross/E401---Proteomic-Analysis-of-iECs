@@ -9,120 +9,196 @@ library(ggbiplot)
 
 ############################################################################################
 ### Functions
+reassign.protein.desc <- function(data.frame) {
+  protein.list.reordered <- protein.list[names(data.frame),]
+  data.frame <- cbind(data.frame, protein.list.reordered)
+  return(data.frame)
+}
 
+############################################################################################
 ### Input
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iEC cell pellets and CM for Proteomics core/Proteomics results/')
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/')
 list.files()
-iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iec cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv')
-iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iec cell pellets and CM for Proteomics core/Proteomics results/E401-metadata.csv')
+iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv', fileEncoding="UTF-8-BOM")
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/E401-metadata.csv', fileEncoding="UTF-8-BOM")
 
 ############################################################################################
 ### Format
+### Select data to plot
+iec.metadata <- iec.metadata[c(1,2,3,11,12,13,14,15,16,17,18,19),]
 
-### Rename columns
-
-### Filter low expression genes
-summary(iec.data)
-iec.data.max <- apply(iec.data, 1, max)
-rows.to.keep <- which(iec.data.max >10)
-length(rows.to.keep)
+### Rename rows
+row.names(iec.data) <- iec.data$Protein
+### Generate Protein name and description table
+protein.list <- iec.data[c(2,3)]
+### Remove extraneous columns
+iec.data.f <- iec.data[-c(1,2,3,23,24,25,26,27)]
+iec.data.f <- iec.data[iec.metadata$Sample]
+summary(iec.data.f)
+### Replace NAs with 0
+iec.data.f[is.na(iec.data.f)] <- 1
+iec.data.max <- apply(iec.data.f, 1, max)
+rows.to.keep <- iec.data.max > 5000
+summary(rows.to.keep)
 ### Reorder columns
-results.iec <- iec.data[rows.to.keep,]
-
-### Replace row names
-#results.als <- convert.ids(results.als)
+results.iec <- iec.data.f[rows.to.keep,]
 
 ### Convert to matrix
 results.iec <- as.matrix(results.iec)
-
+summary(results.iec)
 ############################################################################################
 ### Calculate Principle Components
 
 ### Calculate the actual components
 pca.iec <- prcomp(t(results.iec), scale = TRUE)
+#pca.iec <- prcomp(t(results.iec), scale = FALSE)
 
 ### Calculate the percent variation accounted for by each component
 pca.data.var <- pca.iec$sdev^2
 pca.data.var.per <- round(pca.data.var/sum(pca.data.var)*100, 1)
 
-### Identify the genes with the largest influence
-# PC1
-l.score.pc1 <- pca.iec$rotation[,1]
-l.score.pc1.ranked <- sort(abs(l.score.pc1), decreasing = TRUE)
-l.score.pc1[names(l.score.pc1.ranked)][1:10]
-
-# PC2
-l.score.pc2 <- pca.iec$rotation[,2]
-l.score.pc2.ranked <- sort(abs(l.score.pc2), decreasing = TRUE)
-l.score.pc2[names(l.score.pc2.ranked)][1:10]
-
 ############################################################################################
-### Plot
+### Plot Data
+title = 'PCA analysis of Endothelial Proteomes vs iPSCs'
 subtitle = ''
 
-plot(pca.iec$x[,1], pca.iec$x[,2])
-plot(pca.iec$x[,2], pca.iec$x[,3])
+#plot(pca.iec$x[,1], pca.iec$x[,2])
+#plot(pca.iec$x[,2], pca.iec$x[,3])
 
 barplot(pca.data.var.per, main = 'Scree Plot', xlab = 'Principle Component', ylab = 'Percent Variation')
 
-### GGPlot
-
+### Define data frame for ggplot
 pca.data.to.plot <- data.frame(Sample = rownames(pca.iec$x), 
                               PC1 = pca.iec$x[,1],
                               PC2 = pca.iec$x[,2],
                               PC3 = pca.iec$x[,3],
-                              PC4 = pca.iec$x[,4])
+                              PC4 = pca.iec$x[,4],
+                              PC5 = pca.iec$x[,5])
 
-(pca.data.to.plot <- cbind(pca.data.to.plot, iec.metadata))
+(pca.data.to.plot <- cbind(pca.data.to.plot, iec.metadata[-1]))
+#pca.data.to.plot$Group <- pca.data.to.plot$CellLine
 
-pca.plot <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = Group, color = Group)) +
+### Basic plot of PC1 v PC2
+(pca.plot <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = Group, color = Group)) +
   geom_point() + 
   geom_text() + 
   xlab(paste('PC1 - ', pca.data.var.per[1], '%', sep = '')) +
   ylab(paste('PC2 - ', pca.data.var.per[2], '%', sep = '')) +
   xlim(c(-50,70)) +
   theme_bw() +
-  ggtitle('PCA of E401')
+  ggtitle('PCA of E401'))
 
-pca.plot
-
-
-
-
-
-
-
-
-ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = ShortName)) +
-  geom_point(size = 4, aes(color = Group)) +
-  geom_text(hjust=-0.2,vjust=0.5) + 
+############################################################################################
+### Generate formatted pca plots
+### PC1 v PC2
+subtitle = 'PC1 v PC2'
+(pca.1.v.2 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = ShortName)) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  #geom_text(hjust=-0.2,vjust=0.5) + 
   xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
-  scale_color_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title="PCA of RNA seq Expression", 
+  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+  labs(title = title, 
+       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC2 - ', pca.data.var.per[2], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
         axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
         axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
         panel.background = element_rect(fill = 'white', color = 'black'),
-        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) 
+        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
+
 
 ### PC1 v PC3
-ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC3, label = ShortName)) +
-  geom_point(size = 4, aes(color = Group)) +
-  geom_text(hjust=-0.2,vjust=0.5) + 
+subtitle = 'PC1 v PC3'
+(pca.1.v.3 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC3, label = ShortName)) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  #geom_text(hjust=-0.2,vjust=0.5) + 
   xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
-  scale_color_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title="PCA of RNA seq Expression", 
+  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+  labs(title = title, 
+       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC3 - ', pca.data.var.per[3], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
         axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
         axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
         panel.background = element_rect(fill = 'white', color = 'black'),
-        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) 
+        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
+
+### PC2 v PC3
+subtitle = 'PC2 v PC3'
+(pca.2.v.3 <- ggplot(data = pca.data.to.plot, aes(x = PC2, y = PC3, label = ShortName)) +
+    geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+    #geom_text(hjust=-0.2,vjust=0.5) + 
+    xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+    scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+    labs(title = title, 
+         subtitle = subtitle,
+         x = paste('PC2 - ', pca.data.var.per[2], '%', sep = ''), 
+         y = paste('PC3 - ', pca.data.var.per[3], '%', sep = '')) +
+    theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
+          axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
+          axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
+          panel.background = element_rect(fill = 'white', color = 'black'),
+          plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
+
+### PC1 v PC4
+subtitle = 'PC1 v PC4'
+(pca.1.v.4 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC4, label = ShortName)) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  #geom_text(hjust=-0.2,vjust=0.5) + 
+  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+  labs(title = title, 
+       subtitle = subtitle,
+       x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
+       y = paste('PC4 - ', pca.data.var.per[4], '%', sep = '')) +
+  theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
+        axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
+        axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
+
+### PC1 v PC5
+subtitle = 'PC1 v PC5'
+(pca.1.v.5 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC5, label = ShortName)) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  #geom_text(hjust=-0.2,vjust=0.5) + 
+  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+  labs(title = title, 
+       subtitle = subtitle,
+       x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
+       y = paste('PC5 - ', pca.data.var.per[5], '%', sep = '')) +
+  theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
+        axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
+        axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
 
 
+
+############################################################################################
+### Write to folder
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/PCA/')
+
+
+### Save plot
+tiff(filename= paste0('PCA 1v2.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+pca.1.v.2
+dev.off()
+
+tiff(filename= paste0('PCA 1v3.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+pca.1.v.3
+dev.off()
+
+tiff(filename= paste0('PCA 1v4.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+pca.1.v.4
+dev.off()
+
+tiff(filename= paste0('PCA 1v5.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+pca.1.v.5
+dev.off()
 
 
 ### Alternative coloration
@@ -171,6 +247,62 @@ ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC3, label = Sample)) +
 ### Convert all loadings into vectors of the first two components.  Find the axis of interest.
 ### Then, identify the loadings with the greatest magnitudes along this axis.
 
+
+### Identify the genes with the largest influence
+# PC1
+l.score.pc1 <- pca.iec$rotation[,1]
+l.pc1.up <- sort(l.score.pc1, decreasing = TRUE)
+l.pc1.down <- sort(l.score.pc1, decreasing = FALSE)
+l.pc1.abs <- l.score.pc1[order(abs(l.score.pc1), decreasing = TRUE)]
+quantile(l.pc1.abs[,1], c(0.1, 0.2, 0.8, 0.9, 0.95))
+
+### Reassign protein descriptors
+l.pc1.up <- reassign.protein.desc(l.pc1.up)
+l.pc1.down <- reassign.protein.desc(l.pc1.down)
+l.pc1.abs <- reassign.protein.desc(l.pc1.abs)
+
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/PCA/PCA-loadings-tables/')
+write.csv(l.pc1.up, 'PrComp1-loadings-UP.csv')
+write.csv(l.pc1.down, 'PrComp1-loadings-DOWN.csv')
+write.csv(l.pc1.abs, 'PrComp1-loadings-ABS_VALUES.csv')
+
+# PC2
+l.score.pc2 <- pca.iec$rotation[,2]
+l.score.pc2.ranked <- sort(abs(l.score.pc2), decreasing = TRUE)
+l.score.pc2[names(l.score.pc2.ranked)][1:10]
+
+# PC3
+l.score.pc3 <- pca.iec$rotation[,3]
+l.score.pc3.ranked <- sort(abs(l.score.pc3), decreasing = TRUE)
+l.score.pc3[names(l.score.pc3.ranked)][1:10]
+
+# PC4
+l.score.pc4 <- pca.iec$rotation[,4]
+l.score.pc4.ranked <- sort(abs(l.score.pc4), decreasing = TRUE)
+l.score.pc4[names(l.score.pc4.ranked)][1:10]
+
+# PC5
+l.score.pc5 <- pca.iec$rotation[,5]
+l.pc5.up <- sort(l.score.pc5, decreasing = TRUE)
+l.pc5.down <- sort(l.score.pc5, decreasing = FALSE)
+l.pc5.abs <- l.score.pc5[order(abs(l.score.pc5), decreasing = TRUE)]
+
+### Reassign protein descriptors
+l.pc5.up <- reassign.protein.desc(l.pc5.up)
+l.pc5.down <- reassign.protein.desc(l.pc5.down)
+l.pc5.abs <- reassign.protein.desc(l.pc5.abs)
+
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/PCA/PCA-loadings-tables/')
+write.csv(l.pc5.up, 'PrComp5-loadings-UP.csv')
+write.csv(l.pc5.down, 'PrComp5-loadings-DOWN.csv')
+write.csv(l.pc5.abs, 'PrComp5-loadings-ABS_VALUES.csv')
+
+
+
+##############################################
+############################################################################################
+### sCRATCHWORK
+############################################################################################
 ##############################################
 ### Find the slope and magnitude of all loadings
 loadings <- data.frame(l.score.pc1, l.score.pc2)
@@ -266,144 +398,3 @@ plot(subsample$degree, subsample$magnitude)
 #rows.selected <- c(rows.selected, rows.to.keep)
 #length(rows.selected)
 #loadings.of.interest <- loadings.of.interest[rows.to.keep,]
-
-### SET 2: Range 2
-rows.of.interest <- intersect(which(loadings$slope < slope.of.interest/range.2),
-                              which(loadings$slope > slope.of.interest*range.2))
-length(rows.of.interest)
-loadings.of.interest <- loadings[rows.of.interest,]
-
-### Find the nth percentile of magnitude
-#(percentile.98 <- quantile(loadings.of.interest$magnitude, 0.99))
-#rows.to.keep <- which(loadings.of.interest$magnitude>percentile.98)
-#length(rows.to.keep)
-#rows.selected <- c(rows.selected, rows.to.keep)
-#length(rows.selected)
-
-### SET 3: Range 1
-rows.of.interest <- intersect(which(loadings$slope < slope.of.interest/range.1),
-                              which(loadings$slope > slope.of.interest*range.1))
-length(rows.of.interest)
-loadings.of.interest <- loadings[rows.of.interest,]
-### Find the nth percentile of magnitude
-#(percentile.98 <- quantile(loadings.of.interest$magnitude, 0.98))
-#rows.to.keep <- which(loadings.of.interest$magnitude>percentile.98)
-#length(rows.to.keep)
-#rows.selected <- c(rows.selected, rows.to.keep)
-#length(rows.selected)
-
-##############################################################################
-#genes.to.plot <- loadings[1:2][unique(rows.selected),]*30
-genes.to.plot <- loadings.of.interest
-genes.to.plot[1:2] <- genes.to.plot[1:2]*30
-genes.to.plot$x0 = 0
-genes.to.plot$y0 = 0
-genes.to.plot$Sample = 1
-### Filter by level
-genes.to.plot <- genes.to.plot[which(genes.to.plot$magnitude>1.4),]
-
-#ggplot(data = genes.to.plot, aes(x = x0, y = y0, xend = l.score.pc1, yend = l.score.pc2, color = mag2)) +
-#  geom_segment() +
-#  scale_color_gradient(low = "white", high = "black")
-
-pca.plot.w.slopes + geom_segment(data = genes.to.plot, aes(x = x0, y = y0, xend = l.score.pc1, yend = l.score.pc2))
-
-
-##############################################################################
-### Format row names
-### Convert row names into gene names for easy reading or Entrez ids for GAGE analysis
-
-loadings.null <- loadings[sample(1:nrow(loadings.of.interest),replace = FALSE),]
-
-loadings.of.interest <- convert.ids(loadings.of.interest)
-tpm.of.interest <- tpm.als[row.names(loadings.of.interest),]
-tpm.of.interest <- convert.ids(tpm.of.interest)
-
-tpm.o.i.ez <- convert.to.entrez(tpm.of.interest)
-str(tpm.o.i.ez)
-tpm.o.i.ez[4]
-tpm.o.i.ez2 <- tpm.o.i.ez[[1]]
-grep(8623, tpm.o.i.ez2$join)
-tpm.o.i.ez2 <- tpm.o.i.ez2[-c(2202,2203),]
-tpm.o.i.ez2 <- tpm.o.i.ez2[-581,]
-
-### Assign new IDs to row names
-row.names(tpm.o.i.ez2) <- tpm.o.i.ez2$join
-
-
-
-loadings.null <- convert.ids(loadings.null)
-tpm.null <- tpm.als[row.names(loadings.null),]
-tpm.null <-convert.ids(tpm.null)
-tpm.null <- convert.to.entrez(tpm.null)
-tpm.null2 <- tpm.null[[1]]
-tpm.null2 <- tpm.null2[-c(),]
-
-
-
-
-
-
-
-
-
-
-
-### Filter TPM list based on loadings of interest
-
-for.gage.loadings <- tpm.als[]
-
-pway.loadings <- gage(for.gage.loadings, gsets = kegg.gs, ref = ctrl.index, samp = ko.index, compare = "unpaired")
-
-
-
-
-
-### Annotate!
-
-add.description(loadings.of.interest, 'external_gene_name')
-
-
-
-load.scores.als <- pca.iec$rotation[,1]
-gene.scores <- abs(load.scores.als)
-gene.scores.ranked <- sort(gene.scores, decreasing = TRUE)
-gene.scores.ranked <- names(gene.scores.ranked[1:10])
-pca.iec$rotation[gene.scores.ranked,1]
-
-
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E099 - RNAseq analysis of CHCHD10/DEG analyses/')
-row.num.pos = 10
-gene.name <- results.als$Gene[row.num.pos]
-data.als <- results.als[row.num.pos,][-c(1,2,3,12,13)]
-data.ko <- results.ko[row.num.pos,][-c(1,2,3,10,11)]
-expression <- t(data.als)
-expression.ko <- t(data.ko)
-
-expression <- rbind(expression,expression.ko)
-Disease <- c("CTR", "CTR", "CTR", "CTR", "ALS", "ALS", "ALS", "ALS", 'WT', 'WT', 'WT', 'KO', 'KO', 'KO')
-
-expression <- data.frame(expression, Disease)
-names(expression) <- c('tpm', 'dis')
-
-expression$dis <- factor(expression$dis, c('CTR','ALS','WT','KO'))
-
-boxplot(tpm~dis, data=expression, main=gene.name, xlab="Genome type", ylab="Expression [TPM]")
-
-png(paste0(gene.name,'.png'))
-boxplot(tpm~dis, data=expression, main=gene.name, xlab="Genome type", ylab="Expression [TPM]")
-dev.off()
-
-
-p <- ggplot(test, aes(Dis, TPM))
-p + geom_boxplot()
-
-c('Normalized Expression (TPM)', 'Genenome type')
-test <- t(row.of.interest[-c(1,2,3,12,13)])
-Dis  <- c("CTR", "CTR", "CTR", "CTR", "ALS", "ALS", "ALS", "ALS")
-test <- cbind(test,Dis)
-test <- data.frame(test)
-names(test) <- c('TPM', 'Dis')
-
-test[1] <- as.numeric(levels(test[,1]))[test[,1]]
-boxplot(TPM~Dis, data=test, main=row.of.interest$gene.names, xlab="Expression", ylab="Diseases state")
