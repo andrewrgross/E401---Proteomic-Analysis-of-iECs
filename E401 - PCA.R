@@ -5,7 +5,7 @@
 ############################################################################################
 ### Header
 library(ggplot2)
-library(ggbiplot)
+#library(ggbiplot)
 
 ############################################################################################
 ### Functions
@@ -20,7 +20,7 @@ reassign.protein.desc <- function(data.frame) {
 setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/')
 list.files()
 iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv', fileEncoding="UTF-8-BOM")
-iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/E401-metadata.csv', fileEncoding="UTF-8-BOM")
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding="UTF-8-BOM")
 
 ############################################################################################
 ### Format
@@ -79,7 +79,7 @@ pca.data.to.plot <- data.frame(Sample = rownames(pca.iec$x),
 #pca.data.to.plot$Group <- pca.data.to.plot$CellLine
 
 ### Basic plot of PC1 v PC2
-(pca.plot <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = Group, color = Group)) +
+(pca.plot <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = CellLine, color = Group)) +
   geom_point() + 
   geom_text() + 
   xlab(paste('PC1 - ', pca.data.var.per[1], '%', sep = '')) +
@@ -93,12 +93,11 @@ pca.data.to.plot <- data.frame(Sample = rownames(pca.iec$x),
 ### PC1 v PC2
 subtitle = 'PC1 v PC2'
 (pca.1.v.2 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = ShortName)) +
-  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
   #geom_text(hjust=-0.2,vjust=0.5) + 
   xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
   scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title = title, 
-       subtitle = subtitle,
+  labs(       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC2 - ', pca.data.var.per[2], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
@@ -111,12 +110,11 @@ subtitle = 'PC1 v PC2'
 ### PC1 v PC3
 subtitle = 'PC1 v PC3'
 (pca.1.v.3 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC3, label = ShortName)) +
-  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
   #geom_text(hjust=-0.2,vjust=0.5) + 
-  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1)) +
   scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title = title, 
-       subtitle = subtitle,
+  labs(      subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC3 - ', pca.data.var.per[3], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
@@ -128,12 +126,11 @@ subtitle = 'PC1 v PC3'
 ### PC2 v PC3
 subtitle = 'PC2 v PC3'
 (pca.2.v.3 <- ggplot(data = pca.data.to.plot, aes(x = PC2, y = PC3, label = ShortName)) +
-    geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+    geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
     #geom_text(hjust=-0.2,vjust=0.5) + 
-    xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+    xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1)) +
     scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-    labs(title = title, 
-         subtitle = subtitle,
+    labs(         subtitle = subtitle,
          x = paste('PC2 - ', pca.data.var.per[2], '%', sep = ''), 
          y = paste('PC3 - ', pca.data.var.per[3], '%', sep = '')) +
     theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
@@ -145,12 +142,11 @@ subtitle = 'PC2 v PC3'
 ### PC1 v PC4
 subtitle = 'PC1 v PC4'
 (pca.1.v.4 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC4, label = ShortName)) +
-  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
   #geom_text(hjust=-0.2,vjust=0.5) + 
-  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1)) +
   scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title = title, 
-       subtitle = subtitle,
+  labs(       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC4 - ', pca.data.var.per[4], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
@@ -162,12 +158,11 @@ subtitle = 'PC1 v PC4'
 ### PC1 v PC5
 subtitle = 'PC1 v PC5'
 (pca.1.v.5 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC5, label = ShortName)) +
-  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
   #geom_text(hjust=-0.2,vjust=0.5) + 
-  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1+20)) +
+  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1)) +
   scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
-  labs(title = title, 
-       subtitle = subtitle,
+  labs(       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC5 - ', pca.data.var.per[5], '%', sep = '')) +
   theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
@@ -180,23 +175,22 @@ subtitle = 'PC1 v PC5'
 
 ############################################################################################
 ### Write to folder
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/PCA/')
-
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/PCA/')
 
 ### Save plot
-tiff(filename= paste0('PCA 1v2.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+tiff(filename= paste0('PCA 1v2.tiff'), width = 2000, height = 1600, units = "px", pointsize = 12, res = 250)
 pca.1.v.2
 dev.off()
 
-tiff(filename= paste0('PCA 1v3.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+tiff(filename= paste0('PCA 1v3.tiff'), width = 2000, height = 1600, units = "px", pointsize = 12, res = 250)
 pca.1.v.3
 dev.off()
 
-tiff(filename= paste0('PCA 1v4.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+tiff(filename= paste0('PCA 1v4.tiff'), width = 2000, height = 1600, units = "px", pointsize = 12, res = 250)
 pca.1.v.4
 dev.off()
 
-tiff(filename= paste0('PCA 1v5.tiff'), width = 800, height = 800, units = "px", pointsize = 12)
+tiff(filename= paste0('PCA 1v5.tiff'), width = 2000, height = 1600, units = "px", pointsize = 12, res = 250)
 pca.1.v.5
 dev.off()
 

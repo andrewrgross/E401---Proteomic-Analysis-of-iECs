@@ -21,7 +21,7 @@ rownames(gene.table) <- iec.data$ï..Protein
 
 ### Expand all protein rows
 ## For each protein row, separate out the associated genes
-genes.temp <- strsplit(test, split = ' ')[[1]]
+genes.temp <- strsplit(geneNames, split = ' ')[[1]]
 
 genes <- as.data.frame(gene.table[row.names(iec.de),])
 row.names(genes) <- row.names(iec.de)

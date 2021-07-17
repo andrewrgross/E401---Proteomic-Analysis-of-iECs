@@ -61,10 +61,12 @@ assign.go.terms <- function(dataframe) {                                        
 
 #########################################################################################################
 ### 3. Input
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iEC cell pellets and CM for Proteomics core/Proteomics results/')
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/')
 list.files()
 iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iec cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv')
-iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iec cell pellets and CM for Proteomics core/Proteomics results/E401-metadata.csv')
+iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv')
+
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv')
 
 hpa.reference.data <- read.table('C:/Users/grossar/Box/Sareen Lab Shared/Data/Reference Data/proteinatlas.tsv', sep = '\t', header = TRUE)
 #hpa.reference.data <- read.table('C:/Users/grossar/Desktop/proteinatlas.tsv', sep = '\t', header = TRUE)
@@ -172,7 +174,7 @@ iec.de <- cbind(iec.de, go.results)
 
 ####################################################################################################################################################
 ### Output DE results
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iEC cell pellets and CM for Proteomics core/Proteomics results/E401 - Analysis of proteomics data/')
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/')
 write.csv(iec.de, paste0('DE_',title,'-with GO.csv'))
 
 ### Re-Input results
