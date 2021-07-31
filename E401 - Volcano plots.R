@@ -15,7 +15,6 @@ library(gplots)
 
 ####################################################################################################################################################
 ### Input
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/2021/Results and reports/i-ECs/iEC cell pellets and CM for Proteomics core/Proteomics results/E401 - Analysis of proteomics data/')
 setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/DE csv/')
 
 ### Input DE results
@@ -67,9 +66,9 @@ expression.m <- as.matrix(expression.df)
 
 pal <- colorRampPalette(c('yellow','black','blue'))(100)
 
-heatmap.2(expression.m, scale = 'row', col = pal, trace = 'none', dendrogram="none", 
-          Rowv=FALSE, symm=TRUE, density.info='none', labRow=NA,
-          lmat=rbind(c(4, 2), c(1, 3)), lhei=c(2, 8), lwid=c(4, 1), margins = c(9,0))
+#heatmap.2(expression.m, scale = 'row', col = pal, trace = 'none', dendrogram="none", 
+#          Rowv=FALSE, symm=TRUE, density.info='none', labRow=NA,
+#          lmat=rbind(c(4, 2), c(1, 3)), lhei=c(2, 8), lwid=c(4, 1), margins = c(9,0))
 
 heatmap(expression.m, col = pal, Rowv = NA, Colv = NA, scale = "row", margins = c(8,1))
 ##########################################################################
@@ -121,22 +120,23 @@ volcano <- ggplot( ) +
 #  geom_text(data = volcano.text.down, aes(x=log2FoldChange - 0.2, y = log10(padj) - 0, label = Gene), 
 #            hjust = 1, vjust = 0.1, size = 3, check_overlap = TRUE) +
   geom_point(data = volcano.genes.of.interest, aes(x=log2FoldChange, y = log10(padj), size = log10(baseMean)), color = 'yellow') +
-  geom_text(data = volcano.genes.of.interest, aes(x=log2FoldChange + 0.2, y = log10(padj) - 0, label = Gene), hjust = 0, vjust = 0.1, size = 3, check_overlap = TRUE) +  
+  geom_text(data = volcano.genes.of.interest, aes(x=log2FoldChange + 0.2, y = log10(padj) - 0, label = Gene), hjust = 0, vjust = 0.1, size = 5, check_overlap = TRUE) +  
   scale_color_gradient(low="pink", high="red") +
   scale_size('Log10 Expression', range = c(0.5,4)) +
-  ylim(c(0, min(log10(volcano.data.cov$padj)))) +
-  xlim(c(min(volcano.data.cov$log2FoldChange-0.5), max(volcano.data.cov$log2FoldChange)+1)) +
-  labs(title="P-Value vs. Log Fold Change Volcano Plot",
-       subtitle = title,
+  ylim(c(0, min(log10(volcano.data.cov$padj))-2)) +
+  xlim(c(min(volcano.data.cov$log2FoldChange-0.1), max(volcano.data.cov$log2FoldChange)+2)) +
+  labs(title= title,
        x = 'Log2 Fold Change', 
        y = 'Log10 P-value (Adjusted)') +
-  theme(plot.title = element_text(hjust = 0.5, color="black", face="bold", size=18, margin=margin(0,0,5,0)),
-        plot.subtitle = element_text(hjust = 0.5),
-        axis.title.x = element_text(face="bold", size=13,margin =margin(5,0,5,0)),
-        axis.title.y = element_text(face="bold", size=13,margin =margin(0,5,0,5)),
-        panel.background = element_rect(fill = 'white', color = 'black'),
-        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12),
+  theme(plot.title = element_text(color="black", face="bold", hjust = 0.5, size=22, margin=margin(10,0,20,0)),
+        axis.title.x = element_text(face="bold", size=18,margin =margin(20,0,10,0)),
+        axis.title.y = element_text(face="bold", size=18,margin =margin(0,20,0,10)),
+        panel.background = element_rect(fill = 'white', color = 'black', size = 3),
+        panel.grid = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 16),
         legend.position = 'none') 
+
 
 volcano
 
@@ -146,7 +146,7 @@ setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of pro
 
 
 ### Save plot
-tiff(filename= paste0('Volcano - ',title, '.tiff'), width = 1800, height = 1800, units = "px", pointsize = 20, res = 300)
+tiff(filename= paste0('Volcano - ',title, '.tiff'), width = 2000, height = 1600, units = "px", pointsize = 20, res = 250)
 volcano
 dev.off()
 
