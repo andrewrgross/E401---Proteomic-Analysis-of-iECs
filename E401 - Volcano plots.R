@@ -22,6 +22,8 @@ iec.de <- read.csv('DE_iEC & HUVECs vs. iPSCs.csv', header = TRUE, row.names = 1
 iec.de <- read.csv('DE_iEC vs. HUVECs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. HUVECs'
 iec.de <- read.csv('DE_iEC vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. iPSCs'
 
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding="UTF-8-BOM")
+
 ####################################################################################################################################################
 ### Format
 ##########################################################################
@@ -43,18 +45,27 @@ row.names(iec.de) <- geneNames
 
 ### Filter p-value expression genes
 summary(iec.de)
-#iec.de <- iec.de[order(iec.de$log2FoldChange),]
+iec.de <- iec.de[iec.de$padj < 0.05,]
+iec.de <- iec.de[order(iec.de$log2FoldChange),]
 
 ### Reorder columns and convert to matrix
 expression.df <- iec.de[8:ncol(iec.de)]
-expression.df <- expression.df[c(1,2,3,11,12,13,14,15,16,17,18,19,6,4,5,7,8,9)]
-names(expression.df)
-names(expression.df) <- c('PosCtrl-HUVEC 1', 'PosCtrl-HUVEC 2', 'PosCtrl-HUVEC 3',
+
+newNames             <- c('PosCtrl-HUVEC 1',     'PosCtrl-HUVEC 2',     'PosCtrl-HUVEC 3',
+                          'NegCtrl - EDI028 2',  'NegCtrl - EDI028 3',  
+                          'NegCtrl - EDI42A 1',  'NegCtrl - EDI42A 3',  
+                          'NegCon_03n14 1',      'NegCon_03n14 2', 'NegCon_03n14 3',
                           'iEC(d21) - EDI028 1', 'iEC(d21) - EDI028 2', 'iEC(d21) - EDI028 3',
                           'iEC(d21) - EDI42A 1', 'iEC(d21) - EDI42A 2', 'iEC(d21) - EDI42A 3',
-                          'iEC(d21) - 03n14 1', 'iEC(d21) - 03n14 2', 'iEC(d21) - 03n14 3',
-                          'NegCtrl - EDI42A 1', 'NegCtrl - EDI028 2', 'NegCtrl - EDI028 3',
-                          'NegCtrl - EDi42 3', 'NegCon_03n14 1', 'NegCon_03n14 2')
+                          'iEC(d21) - 03n14 1',  'iEC(d21) - 03n14 2',  'iEC(d21) - 03n14 3')
+data.frame(names = names(expression.df), newNames)
+names(expression.df) <- newNames
+
+
+expression.df <- expression.df[c(1,2,3, 11,12,13,14,15,16,17,18,19, 4,5,6,7,8,9,10)]
+
+names(expression.df)
+
 expression.m <- as.matrix(expression.df)
 
 ####################################################################################################################################################
@@ -70,7 +81,7 @@ pal <- colorRampPalette(c('yellow','black','blue'))(100)
 #          Rowv=FALSE, symm=TRUE, density.info='none', labRow=NA,
 #          lmat=rbind(c(4, 2), c(1, 3)), lhei=c(2, 8), lwid=c(4, 1), margins = c(9,0))
 
-heatmap(expression.m, col = pal, Rowv = NA, Colv = NA, scale = "row", margins = c(8,1))
+heatmap(expression.m, col = pal, Rowv = NA, Colv = NA, scale = 'row', margins = c(8,1))
 ##########################################################################
 ### Volcano Plots
 
