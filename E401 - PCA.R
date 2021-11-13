@@ -17,28 +17,29 @@ reassign.protein.desc <- function(data.frame) {
 
 ############################################################################################
 ### Input
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/')
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Proteomics Datasets/')
 list.files()
-iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv', fileEncoding="UTF-8-BOM")
-iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding="UTF-8-BOM")
+iec.data <-read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Proteomics Datasets/DIANN_iPSC_EC_TotalProteome_ProteotypicIdentifications.csv', fileEncoding = 'UTF-8-BOM')
+
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding = 'UTF-8-BOM')
 
 ############################################################################################
 ### Format
 ### Select data to plot
-iec.metadata <- iec.metadata[c(1,2,3,11,12,13,14,15,16,17,18,19),]
+#iec.metadata <- iec.metadata[iec.metadata$]
 
 ### Rename rows
 row.names(iec.data) <- iec.data$Protein
 ### Generate Protein name and description table
 protein.list <- iec.data[c(2,3)]
 ### Remove extraneous columns
-iec.data.f <- iec.data[-c(1,2,3,23,24,25,26,27)]
-iec.data.f <- iec.data[iec.metadata$Sample]
+iec.data.f <- iec.data[-c(1,2,3,24,25,26,27,28)]
+#iec.data.f <- iec.data[iec.metadata$Sample]
 summary(iec.data.f)
 ### Replace NAs with 0
 iec.data.f[is.na(iec.data.f)] <- 1
 iec.data.max <- apply(iec.data.f, 1, max)
-rows.to.keep <- iec.data.max > 5000
+rows.to.keep <- iec.data.max > 5000000
 summary(rows.to.keep)
 ### Reorder columns
 results.iec <- iec.data.f[rows.to.keep,]
@@ -121,7 +122,8 @@ subtitle = 'PC1 v PC2'
 (pca.1.v.2 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC2, label = ShortName)) +
   geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 3) +
   #geom_text(hjust=-0.2,vjust=0.5) + 
-  xlim(min(pca.data.to.plot$PC1),max(pca.data.to.plot$PC1)) +
+  xlim(min(pca.data.to.plot$PC1*1.3),max(pca.data.to.plot$PC1)*1.3) +
+  ylim(min(pca.data.to.plot$PC2*1.3),max(pca.data.to.plot$PC2)*1.3) +
   scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
   labs(       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
@@ -172,18 +174,19 @@ subtitle = 'PC2 v PC3'
 ### PC1 v PC4
 subtitle = 'PC1 v PC4'
 (pca.1.v.4 <- ggplot(data = pca.data.to.plot, aes(x = PC1, y = PC4, label = ShortName)) +
-  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 2) +
-  #geom_text(hjust=-0.2,vjust=0.5) + 
-  xlim(min(pca.data.to.plot$PC1)-5,max(pca.data.to.plot$PC1)) +
-  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
+  geom_point(size = 5, aes(fill = Group), color = 'black', pch = 21, stroke = 3) +
+  xlim(min(pca.data.to.plot$PC1*1.3),max(pca.data.to.plot$PC1)*1.3) +
+  ylim(min(pca.data.to.plot$PC4*1.3),max(pca.data.to.plot$PC4)*1.3) +  scale_fill_manual(values = c("#fe1c1c", "#fab9b6", "#a6acf7", "#000dc4")) +
   labs(       subtitle = subtitle,
        x = paste('PC1 - ', pca.data.var.per[1], '%', sep = ''), 
        y = paste('PC4 - ', pca.data.var.per[4], '%', sep = '')) +
-  theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
-        axis.title.x = element_text(face="bold", size=14,margin =margin(20,0,10,0)),
-        axis.title.y = element_text(face="bold", size=14,margin =margin(0,20,0,10)),
-        panel.background = element_rect(fill = 'white', color = 'black'),
-        plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 12)) )
+    theme(plot.title = element_text(color="black", face="bold", size=22, margin=margin(10,0,20,0)),
+          axis.title.x = element_text(face="bold", size=18,margin =margin(10,0,10,0)),
+          axis.title.y = element_text(face="bold", size=18,margin =margin(0,10,0,10)),
+          panel.background = element_rect(fill = 'white', color = 'black', size = 3),
+          panel.grid = element_blank(),
+          axis.ticks = element_blank(),
+          plot.margin = unit(c(1,1,1,1), "cm"), axis.text = element_text(size = 16)) )
 
 ### PC1 v PC5
 subtitle = 'PC1 v PC5'

@@ -15,12 +15,12 @@ library(gplots)
 
 ####################################################################################################################################################
 ### Input
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/DE csv/')
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/')
 
 ### Input DE results
-iec.de <- read.csv('DE_iEC & HUVECs vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC & HUVECs vs. iPSCs'
-iec.de <- read.csv('DE_iEC vs. HUVECs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. HUVECs'
-iec.de <- read.csv('DE_iEC vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. iPSCs'
+iec.de <- read.csv('DE_iEC & HUVECs vs. iPSCs-with GO.csv', header = TRUE, row.names = 1) ; title = 'iEC & HUVECs vs. iPSCs'
+iec.de <- read.csv('DE_iEC vs. HUVECs-with GO.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. HUVECs'
+#iec.de <- read.csv('DE_iEC vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. iPSCs'
 
 iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding="UTF-8-BOM")
 
@@ -29,7 +29,7 @@ iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E40
 ##########################################################################
 ### Reassign names
 #names(counts.cov) <- sample.names
-geneNames <- iec.de$gene.table.row.names.iec.de....
+geneNames <- iec.de$Gene
 
 geneNames = c()
 dataframe <- iec.de
@@ -52,7 +52,7 @@ iec.de <- iec.de[order(iec.de$log2FoldChange),]
 expression.df <- iec.de[8:ncol(iec.de)]
 
 newNames             <- c('PosCtrl-HUVEC 1',     'PosCtrl-HUVEC 2',     'PosCtrl-HUVEC 3',
-                          'NegCtrl - EDI028 2',  'NegCtrl - EDI028 3',  
+                          'NegCtrl - EDI028 1',  'NegCtrl - EDI028 2',  'NegCtrl - EDI028 3',  
                           'NegCtrl - EDI42A 1',  'NegCtrl - EDI42A 3',  
                           'NegCon_03n14 1',      'NegCon_03n14 2', 'NegCon_03n14 3',
                           'iEC(d21) - EDI028 1', 'iEC(d21) - EDI028 2', 'iEC(d21) - EDI028 3',
@@ -62,7 +62,7 @@ data.frame(names = names(expression.df), newNames)
 names(expression.df) <- newNames
 
 
-expression.df <- expression.df[c(1,2,3, 11,12,13,14,15,16,17,18,19, 4,5,6,7,8,9,10)]
+expression.df <- expression.df[c(1,2,3, 12,13,14,15,16,17,18,19,20, 4,5,6,7,8,9,10,11)]
 
 names(expression.df)
 
@@ -86,34 +86,39 @@ heatmap(expression.m, col = pal, Rowv = NA, Colv = NA, scale = 'row', margins = 
 ### Volcano Plots
 
 ### Format #############################################################################################
-volcano.data.cov <- iec.de
-p.less.than = volcano.data.cov$padj <0.5
+### Assign data
+volcano.data <- iec.de[c(1,2,3,7)]
+### Filter out high p-values and NAs
+p.less.than = volcano.data$padj <0.5
 p.less.than[is.na(p.less.than)] = FALSE
-volcano.data.cov <- volcano.data.cov[p.less.than,]
-volcano.data.cov$Gene = volcano.data.cov[,1]
-volcano.data.cov$Gene = rownames(volcano.data.cov)
-genes.ds <- volcano.data.cov$Gene[1:20]    # Genes of interest
+volcano.data <- volcano.data[p.less.than,]
+### Assign genes of interest
+#volcano.data$Gene = volcano.data[,1]
+#volcano.data$Gene = rownames(volcano.data)
+volcano.data <- volcano.data[order(volcano.data$padj, decreasing = FALSE),]
+genes.ds <- volcano.data$Gene[1:20]    # Genes of interest
 
 ### Converting FC from log2 to log10
-volcano.data.cov$log10FC <- log10(2^volcano.data.cov$log2FoldChange)
+volcano.data$log10FC <- log10(2^volcano.data$log2FoldChange)
 
-volcano.data.cov.sig <- volcano.data.cov[volcano.data.cov$padj<0.005,]
-volcano.data.cov.sig.up <- volcano.data.cov.sig[volcano.data.cov.sig$log2FoldChange>0.5,]
-volcano.data.cov.sig.down <- volcano.data.cov.sig[-volcano.data.cov.sig$log2FoldChange>0.5,]
+### Subset significantly up and down regulated proteins
+volcano.data.sig <- volcano.data[volcano.data$padj<0.005,]
+volcano.data.sig.up <- volcano.data.sig[volcano.data.sig$log2FoldChange>0.5,]
+volcano.data.sig.down <- volcano.data.sig[-volcano.data.sig$log2FoldChange>0.5,]
 
-volcano.data.cov.sig <- volcano.data.cov.sig[order(volcano.data.cov.sig$baseMean),]
+volcano.data.sig <- volcano.data.sig[order(volcano.data.sig$baseMean),]
 
 
 ### Selecting genes to list
-volcano.data.cov.sig$Edge.up <- -log(volcano.data.cov.sig$padj) * volcano.data.cov.sig$log2FoldChange
-volcano.data.cov.sig$Edge.down <- -log(volcano.data.cov.sig$padj) * -volcano.data.cov.sig$log2FoldChange
+volcano.data.sig$Edge.up <- -log(volcano.data.sig$padj) * volcano.data.sig$log2FoldChange
+volcano.data.sig$Edge.down <- -log(volcano.data.sig$padj) * -volcano.data.sig$log2FoldChange
 
-volcano.text.up <- volcano.data.cov.sig[volcano.data.cov.sig$Edge.up > 9,]; nrow(volcano.text.up)
-volcano.text.down <- volcano.data.cov.sig[volcano.data.cov.sig$Edge.down > 9,]; nrow(volcano.text.down)
+volcano.text.up <- volcano.data.sig[volcano.data.sig$Edge.up > 9,]; nrow(volcano.text.up)
+volcano.text.down <- volcano.data.sig[volcano.data.sig$Edge.down > 9,]; nrow(volcano.text.down)
 
 ### Genes of interest
-volcano.genes.of.interest <- volcano.data.cov.sig[volcano.data.cov.sig$Gene %in% genes.ds,]
-volcano.genes.of.interest.null <- volcano.data.cov[volcano.data.cov$Gene %in% genes.ds,]
+volcano.genes.of.interest <- volcano.data.sig[volcano.data.sig$Gene %in% genes.ds,]
+volcano.genes.of.interest.null <- volcano.data[volcano.data$Gene %in% genes.ds,]
 
 ### Manually filtering
 #genes.to.omit <- c('ANKRD36', 'AC022400.7', 'LINC00342' )
@@ -123,9 +128,9 @@ text.size = 2
 
 
 volcano <- ggplot( ) +
-  geom_point(data = volcano.data.cov, aes(x=log2FoldChange, y = log10(padj) ),color = 'grey', size = 0.9) +
-  geom_point(data = volcano.data.cov.sig.up, aes(x=log2FoldChange, y = log10(padj), size = log10(baseMean)), color = 'red') +
-  geom_point(data = volcano.data.cov.sig.down, aes(x=log2FoldChange, y = log10(padj), size = log10(baseMean)), color = 'blue') +
+  geom_point(data = volcano.data, aes(x=log2FoldChange, y = log10(padj) ),color = 'grey', size = 0.9) +
+  geom_point(data = volcano.data.sig.up, aes(x=log2FoldChange, y = log10(padj), size = log10(baseMean)), color = 'red') +
+  geom_point(data = volcano.data.sig.down, aes(x=log2FoldChange, y = log10(padj), size = log10(baseMean)), color = 'blue') +
 #  geom_text(data = volcano.text.up, aes(x=log2FoldChange + 0.2, y = log10(padj) - 0, label = Gene), 
 #            hjust = 0, vjust = 0.1, size = 3, check_overlap = TRUE) +
 #  geom_text(data = volcano.text.down, aes(x=log2FoldChange - 0.2, y = log10(padj) - 0, label = Gene), 
@@ -134,8 +139,8 @@ volcano <- ggplot( ) +
   geom_text(data = volcano.genes.of.interest, aes(x=log2FoldChange + 0.2, y = log10(padj) - 0, label = Gene), hjust = 0, vjust = 0.1, size = 5, check_overlap = TRUE) +  
   scale_color_gradient(low="pink", high="red") +
   scale_size('Log10 Expression', range = c(0.5,4)) +
-  ylim(c(0, min(log10(volcano.data.cov$padj))-2)) +
-  xlim(c(min(volcano.data.cov$log2FoldChange-0.1), max(volcano.data.cov$log2FoldChange)+2)) +
+  ylim(c(0, min(log10(volcano.data$padj))-2)) +
+  xlim(c(min(volcano.data$log2FoldChange-0.1), max(volcano.data$log2FoldChange)+2)) +
   labs(title= title,
        x = 'Log2 Fold Change', 
        y = 'Log10 P-value (Adjusted)') +

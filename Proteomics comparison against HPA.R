@@ -66,22 +66,50 @@ assign.go.terms <- function(dataframe) {                                        
 #########################################################################################################
 setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/')
 list.files()
-iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv', fileEncoding="UTF-8-BOM")
+#iec.data <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Roberta/Results/2021/i-ECs_2021/iEC cell pellets and CM for Proteomics core/Proteomics results/2021_64_DataReport_Optra_PanHuman_mapDIA.csv', fileEncoding="UTF-8-BOM")
+iec.data <-read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Proteomics Datasets/DIANN_iPSC_EC_TotalProteome_ProteotypicIdentifications.csv', fileEncoding = 'UTF-8-BOM')
 
-iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv')
+iec.metadata <- read.csv('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/E401-metadata.csv', fileEncoding = 'UTF-8-BOM')
 
 hpa.reference.data <- read.table('C:/Users/grossar/Box/Sareen Lab Shared/Data/Reference Data/proteinatlas.tsv', sep = '\t', header = TRUE)
 
 #########################################################################################################
 ### 4. Compose lists of rows with proteins detected in all samples of a type  
 #########################################################################################################
+### 4.1: Format expression data
+gene.table <- iec.data[2]
+rownames(gene.table) <- iec.data$Protein
+rownames(iec.data) <- rownames(gene.table)
+
+
+### 4.2 - Formate HPA data
+hpa.cell.type <- hpa.reference.data[-seq(17,241)]
+hpa.ec <- hpa.cell.type[c(1,2,3,4,5,8,9,10,11,33)]
+
+### Isolating relevant proteins:
+## Find the quartiles:
+all_expression = iec.data#[4:22]
+
+all_values = c()
+for (columnno in seq(1,ncol(all_expression))){
+  column = all_expression[,columnno]
+  all_values = c(all_values, unlist(column))
+}
+length(all_expression)
+summary(all_expression)
+
+# Remove all NAs and all proteins with median expression below the first quartile
+test <- which(apply(iec.data[11:19],1,min) >= 7593)
+
+
+
 ### I need 10 sets. I'll make a data frame to hold them.
 vennDdata = data.frame(counts = rep(0,13))
 rownames(vennDdata) = c('iec', 'ipsc', 'huvec', 'in_iec_hu', 'in_iec_ipsc', 'in_ipsc_hu', 'in_all', 'only_iec_hu', 'only_iec_ipsc', 'only_ipsc_hu', 'only_iec', 'only_hu', 'only_ipsc')
 
-detected_in_iec <- which(iec.data$COUNT_iEC >= 6)          ;       vennDdata['iec',] = length(detected_in_iec)
+detected_in_iec <- which(iec.data$COUNT_iEC >= 5)          ;       vennDdata['iec',] = length(detected_in_iec)
 detected_in_huvec <- which(iec.data$COUNT_PC >= 2)         ;       vennDdata['huvec',] = length(detected_in_huvec)
-detected_in_ipsc <- which(iec.data$COUNT_NC >= 5)          ;       vennDdata['ipsc',] = length(detected_in_ipsc)
+detected_in_ipsc <- which(iec.data$COUNT_NC >= 4)          ;       vennDdata['ipsc',] = length(detected_in_ipsc)
 
 intersection_iec_huvec <- intersect(detected_in_iec, detected_in_huvec)    ;  vennDdata['in_iec_hu',]   = length(intersection_iec_huvec)
 intersection_iec_ipsc  <- intersect(detected_in_iec, detected_in_ipsc)     ;  vennDdata['in_iec_ipsc',] = length(intersection_iec_ipsc)
@@ -127,31 +155,85 @@ write.csv(data.iec_ipsc, paste0('Venn_iec_ipsc_only.csv'))
 write.csv(data.ipsc_hu, paste0('Venn_ipsc_hu_only.csv'))
 
 
+#########################################################################################################
+### 7: Differential Expression
+#########################################################################################################
+iec.data = iec.data[-c(1:3,24:29)]
+names(iec.data) = iec.metadata$ShortName
 
-## - Remove unwanted columns
-gene.table <- iec.data[2]
-rownames(gene.table) <- iec.data$ï..Protein
+### 7.1: Select data
+# Counts of iEC vs HUVECs
+counts.data <- iec.data[iec.metadata$CellType == 'EC'] ; title = 'iEC vs. HUVECs'; columnData <- data.frame(rownames = names(counts.data), celltype = c("HUVEC","HUVEC","HUVEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC"))
 
-iec.data <- iec.data[-c(1,2,3,23,23,24,25,26,27)]
-rownames(iec.data) <- rownames(gene.table)
+# Counts of iEC & HUVECs vs iPSC
+counts.data <- iec.data ; title = 'iEC & HUVECs vs. iPSCs'; columnData <- data.frame(rownames= names(counts.data), celltype =  iec.metadata$CellType)
 
-hpa.cell.type <- hpa.reference.data[-seq(17,241)]
-hpa.ec <- hpa.cell.type[c(1,2,3,4,5,8,9,10,11,33)]
+# Counts of iEC vs iPSC
+counts.data <- iec.data[iec.metadata$Group != 'HUVEC'] ; title = 'iEC vs. iPSCs'; columnData <- data.frame(rownames= names(counts.data), celltype = iec.metadata$Group[iec.metadata$Group != 'HUVEC'])
 
-### Isolating relevant proteins:
-## Find the quartiles:
-all_expression = iec.data[4:22]
+# Remove NAs
+counts.data <- rm.na(counts.data)
 
-all_values = c()
-for (columnno in seq(1,ncol(all_expression))){
-  column = all_expression[,columnno]
-  all_values = c(all_values, unlist(column))
-}
-length(all_expression)
-summary(all_expression)
+# Convert counts into a matrix of integers
+counts.data.m <- round(as.matrix(counts.data/100), 0)
 
-# Remove all NAs and all proteins with median expression below the first quartile
-test <- which(apply(iec.data[11:19],1,min) >= 7593)
+#########################################################################################################
+### 8: Differential Expression
+#########################################################################################################
+### Make our DESeq data sets
+dds.iec <- DESeqDataSetFromMatrix(countData = counts.data.m, colData = columnData, design = ~ celltype)
+### Run DESeq
+dds.iec <- DESeq(dds.iec)
+iec.de <- as.data.frame(results(dds.iec))
+### Join intensity to data
+genes <- as.data.frame(gene.table[row.names(iec.de),])
+row.names(genes) <- row.names(iec.de)
+iec.de <- cbind(genes,iec.de, counts.data)
+
+#########################################################################################################
+### 9: Format Results
+#########################################################################################################
+### Order by padj
+iec.de <- iec.de[order(iec.de$padj, decreasing = FALSE),]
+### Flip the sign of the FC if necessary to make sure the results are normalized to iPSCs
+iec.de$log2FoldChange = -iec.de$log2FoldChange
+
+### Output distribution
+hist(log10(iec.de$padj[iec.de$padj<0.5]), breaks = seq(round(log10(min(iec.de$padj[1])))-1, 0))
+
+length(which(iec.de$padj<0.5))
+length(which(iec.de$padj<0.005))
+
+### Assign GO terms
+go.results <- assign.go.terms(iec.de)
+row.names(go.results) <- go.results$uniprotswissprot
+### Join
+missing.rows <- data.frame(uniprotswissprot = setdiff(row.names(iec.de), row.names(go.results)), bio.process = '', molecular.fun = '', cell.comp = '')
+row.names(missing.rows) <- missing.rows$uniprotswissprot
+
+go.results <- rbind(go.results, missing.rows)
+go.results <- go.results[row.names(iec.de),]
+
+iec.de <- cbind(iec.de, go.results)
+
+#########################################################################################################
+### 10: Output DE results
+#########################################################################################################
+print(title)
+setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/')
+write.csv(iec.de, paste0('DE_',title,'-with GO.csv'))
+
+### Re-Input results
+iec.de <- read.csv('DE_iEC & HUVECs vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC & HUVECs vs. iPSCs'
+iec.de <- read.csv('DE_iEC vs. HUVECs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. HUVECs'
+iec.de <- read.csv('DE_iEC vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. iPSCs'
+
+
+
+
+#########################################################################################################
+### X: Depreciated steps
+#########################################################################################################
 
 
 all_expression[]
@@ -220,70 +302,6 @@ shared.ec.prot <- cbind(shared.ec.prot,shared.annotations)
 ### 6.1 - Plot Eulerr/Venn diagram
 ### - Filter based on expression level
 
-
-######################################################################################
-### 7: Differential Expression
-
-### 7.1: Select data
-# Counts of iEC vs HUVECs
-counts.data <- iec.data[c(1,2,3,11,12,13,14,15,16,17,18,19)] ; title = 'iEC vs. HUVECs'; columnData <- data.frame(rownames = names(counts.data), celltype = c("HUVEC","HUVEC","HUVEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC","iEC"))
-
-# Counts of iEC & HUVECs vs iPSC
-counts.data <- iec.data ; title = 'iEC & HUVECs vs. iPSCs'; columnData <- data.frame(rownames= names(counts.data), celltype = c('EC','EC','EC','iPSC','iPSC','iPSC','iPSC','iPSC','iPSC','iPSC','EC','EC','EC','EC','EC','EC','EC','EC','EC'))
-
-# Counts of iEC vs iPSC
-counts.data <- iec.data[4:19] ; title = 'iEC vs. iPSCs'; columnData <- data.frame(rownames= names(counts.data), celltype = c('iPSC','iPSC','iPSC','iPSC','iPSC','iPSC','iPSC','EC','EC','EC','EC','EC','EC','EC','EC','EC'))
-
-# Remove NAs
-counts.data <- rm.na(counts.data)
-
-# Convert counts into a matrix of integers
-counts.data.m <- round(as.matrix(counts.data), 0)
-
-####################################################################################################################################################
-### 8: Differential Expression
-### Make our DESeq data sets
-dds.iec <- DESeqDataSetFromMatrix(countData = counts.data.m, colData = columnData, design = ~ celltype)
-### Run DESeq
-dds.iec <- DESeq(dds.iec)
-iec.de <- as.data.frame(results(dds.iec))
-### Join intensity to data
-genes <- as.data.frame(gene.table[row.names(iec.de),])
-row.names(genes) <- row.names(iec.de)
-iec.de <- cbind(genes,iec.de, counts.data)
-
-####################################################################################################################################################
-### 9: Format Results
-### Order by padj
-iec.de <- iec.de[order(iec.de$padj, decreasing = FALSE),]
-
-### Output distribution
-hist(log10(iec.de$padj[iec.de$padj<0.5]), breaks = seq(round(log10(min(iec.de$padj[1]))), 0))
-
-length(which(iec.de$padj<0.5))
-length(which(iec.de$padj<0.005))
-
-### Assign GO terms
-go.results <- assign.go.terms(iec.de)
-row.names(go.results) <- go.results$uniprotswissprot
-### Join
-missing.rows <- data.frame(uniprotswissprot = setdiff(row.names(iec.de), row.names(go.results)), bio.process = '', molecular.fun = '', cell.comp = '')
-row.names(missing.rows) <- missing.rows$uniprotswissprot
-
-go.results <- rbind(go.results, missing.rows)
-go.results <- go.results[row.names(iec.de),]
-
-iec.de <- cbind(iec.de, go.results)
-
-####################################################################################################################################################
-### Output DE results
-setwd('C:/Users/grossar/Box/Sareen Lab Shared/Data/Andrew/E401 - Analysis of proteomics data/Differential Expression Tables/')
-write.csv(iec.de, paste0('DE_',title,'-with GO.csv'))
-
-### Re-Input results
-iec.de <- read.csv('DE_iEC & HUVECs vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC & HUVECs vs. iPSCs'
-iec.de <- read.csv('DE_iEC vs. HUVECs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. HUVECs'
-iec.de <- read.csv('DE_iEC vs. iPSCs.csv', header = TRUE, row.names = 1) ; title = 'iEC vs. iPSCs'
 
 
 ####################################################################################################################################################
